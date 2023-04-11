@@ -127,7 +127,7 @@ class mi(Evaluator):
             with catch_warnings():
                 filterwarnings('ignore', "invalid value encountered", RuntimeWarning)
                 mi = mutual_info_regression(y_i, y_pred_i)
-                mi /= np.max(mi)
+
             x[i] = 0 if np.isnan(mi) else mi
 
 
