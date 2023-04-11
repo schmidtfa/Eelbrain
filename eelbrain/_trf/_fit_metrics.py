@@ -5,6 +5,8 @@ from warnings import catch_warnings, filterwarnings
 import numpy as np
 from scipy.linalg import norm
 from scipy.stats import spearmanr
+from sklearn.feature_selection import mutual_info_regression
+
 try:
     from scipy.stats import ConstantInputWarning  # >= 1.9
 except ImportError:
@@ -107,6 +109,26 @@ class Correlation(Evaluator):
                 filterwarnings('ignore', "invalid value encountered", RuntimeWarning)
                 r = np.corrcoef(y_i, y_pred_i)[0, 1]
             x[i] = 0 if np.isnan(r) else r
+
+
+class mi(Evaluator):
+    attr = 'bits'
+    name = 'mi'
+    meas = 'bits'
+
+    def add_y(
+            self,
+            i: int,  # y index (row in data.y)
+            y: np.ndarray,  # actual data
+            y_pred: np.ndarray,  # data predicted by model
+    ):
+        for x, segments in zip(self.xs, self.segments):
+            y_i, y_pred_i = self._crop_y(segments, y, y_pred)
+            with catch_warnings():
+                filterwarnings('ignore', "invalid value encountered", RuntimeWarning)
+                mi = mutual_info_regression(y_i, y_pred_i)
+                mi /= np.max(mi)
+            x[i] = 0 if np.isnan(mi) else mi
 
 
 class RankCorrelation(Evaluator):
@@ -240,6 +262,7 @@ EVALUATORS = {
     'l1': L1,
     'l2': L2,
     'r': Correlation,
+    'mi':mi,
     'r_rank': RankCorrelation,
     'vec-l1': VectorL1,
     'vec-l2': VectorL2,
